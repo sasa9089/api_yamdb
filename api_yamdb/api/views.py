@@ -8,10 +8,11 @@ from django.core.mail import send_mail
 from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
-from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAuthenticated, IsAdmin
+from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdmin
 from .serializers import ReviewSerialazer, CommentSerialazer, EditSerializer, UserSerializer, CreateUserSerializer
-from reviews.models import Comment, User
+from reviews.models import Title, User
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -52,7 +53,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, review=review)
 
 
-class UserViewSet(ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     search_fields = ('username',)
     serializer_class = UserSerializer

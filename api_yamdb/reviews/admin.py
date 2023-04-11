@@ -21,7 +21,7 @@ class CommentAdmin(admin.ModelAdmin):
         'review',
         'text',
         'author',
-        'Pub_date',
+        'pub_date',
     )
     search_fields = ('review',)
     list_filter = ('review',)
