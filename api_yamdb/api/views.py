@@ -1,17 +1,55 @@
 from http.client import OK
-
+from django.shortcuts import render
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from rest_framework.decorators import action, api_view
-from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
-from reviews.models import User
 
-from api.permissions import IsAdmin
-from api.serializers import EditSerializer, UserSerializer, CreateUserSerializer
+from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAuthenticated, IsAdmin
+from .serializers import ReviewSerialazer, CommentSerialazer, EditSerializer, UserSerializer, CreateUserSerializer
+from reviews.models import Comment, User
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerialazer
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        IsAuthorOrModeratorOrAdminOrReadOnly,
+    )
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        return title.reviews.all()
+    
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerialazer
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        IsAuthorOrModeratorOrAdminOrReadOnly
+    )
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        review = get_object_or_404(
+            title.reviews, pk=self.kwargs.get('review_id')
+        )
+        return review.comments.all()
+    
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        review = get_object_or_404(
+            title.reviews, pk=self.kwargs.get('review_id')
+        )
+        serializer.save(author=self.request.user, review=review)
 
 
 class UserViewSet(ModelViewSet):
@@ -62,3 +100,4 @@ def create_user(request):
 @api_view(['POST'])
 def create_token(request):
     pass
+
