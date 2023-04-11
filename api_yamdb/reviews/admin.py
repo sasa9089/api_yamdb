@@ -1,3 +1,27 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Review, Comment
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'text',
+        'author',
+        'score',
+    )
+    search_fields = ('pub_date',)
+    list_filter = ('pub_date',)
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'review',
+        'text',
+        'author',
+        'Pub_date',
+    )
+    search_fields = ('review',)
+    list_filter = ('review',)
