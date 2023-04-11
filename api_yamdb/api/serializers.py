@@ -1,7 +1,8 @@
 from rest_framework import serializers
+
 from django.shortcuts import get_object_or_404
 
-from reviews.models import Review, Comment
+from reviews.models import Review, Comment, User
 
 
 class ReviewSerialazer(serializers.ModelSerializer):
@@ -41,3 +42,41 @@ class CommentSerialazer(serializers.ModelSerializer):
         fields = ('id', 'text', 'author', 'pub_date')
         model = Comment
         read_only_fields = ('id', 'author', 'pub_date', 'review_id', )
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role',
+        )
+        model = User
+
+    def validate(self, data):
+        if data.get('username') == 'me':
+            raise serializers.ValidationError(
+                'Нельзя использовать это имя.'
+            )
+        return data
+
+
+class EditSerializer(UserSerializer):
+    role = serializers.CharField(read_only=True)
+
+
+class CreateUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('username', 'email')
+        model = User
+
+    def validate(self, data):
+        if data.get('username') == 'me':
+            raise serializers.ValidationError(
+                'Нельзя использовать это имя.'
+            )
+        return data
+
