@@ -1,6 +1,7 @@
-from http.client import OK
-from django.shortcuts import render
-from rest_framework import viewsets
+from django.db import IntegrityError
+from rest_framework import viewsets, status
+from rest_framework.exceptions import ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
@@ -9,10 +10,12 @@ from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import AccessToken
 
-from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdmin, IsAdminOrReadOnly
-from .serializers import ReviewSerialazer, CommentSerialazer, EditSerializer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer
-from reviews.models import Title, User, Title, Genre, Category
+from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdmin, IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
+from .serializers import ReviewSerialazer, CommentSerialazer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer, TokenSerializer, 
+from reviews.models import Title, User, Genre, Category
+
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -55,38 +58,43 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
+    lookup_field = 'username'
+    filter_backends = (SearchFilter,)
     search_fields = ('username',)
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsAdmin,)
+    permission_classes = (IsAuthorizedOrAdminOrSuperuser,)
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     @action(
-        methods=('get', 'patch'),
+        methods=(['GET', 'PATCH']),
         detail=False,
         url_path='me',
         permission_classes=(IsAuthenticated,),
-        serializer_class=EditSerializer,
     )
     def users(self, request):
         user = request.user
         if request.method == 'GET':
             serializer = self.get_serializer(request.user)
-            return Response(serializer.data, status=OK)
+            return Response(serializer.data)
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=OK)
+        serializer.save(role=request.user.role)
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
 def create_user(request):
     serializer = CreateUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
-    user = get_object_or_404(
-        User,
-        username=serializer.validated_data["username"]
-    )
+    username = serializer.validated_data['username']
+    email = serializer.validated_data['email']
+    try:
+        user, created = User.objects.get_or_create(
+            username=username, email=email
+        )
+    except IntegrityError as error:
+        raise ValidationError(f'{error}')
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='Регистрация на сайте YaMDb',
@@ -94,13 +102,26 @@ def create_user(request):
         from_email='admin@yamdb.com',
         recipient_list=[user.email],
     )
-
-    return Response(serializer.data, status=OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
 def create_token(request):
-    pass
+    serializer = TokenSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(
+        User, username=serializer.validated_data.get('username')
+    )
+    if default_token_generator.check_token(
+            user, serializer.validated_data.get("confirmation_code")
+    ):
+        token = AccessToken.for_user(user)
+        return Response(
+            {'token': f'{token}'}, status=status.HTTP_200_OK
+        )
+    return Response(
+        serializer.errors, status=status.HTTP_400_BAD_REQUEST
+    )
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -120,4 +141,4 @@ class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     pagination_class = PageNumberPagination
-    
+

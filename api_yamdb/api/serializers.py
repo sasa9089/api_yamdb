@@ -1,3 +1,4 @@
+from django.core import validators
 from rest_framework import serializers
 
 from django.shortcuts import get_object_or_404
@@ -66,14 +67,22 @@ class UserSerializer(serializers.ModelSerializer):
         return data
 
 
-class EditSerializer(UserSerializer):
-    role = serializers.CharField(read_only=True)
-
-
 class CreateUserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        max_length=254,
+        validators=(validators.MaxLengthValidator(254),)
+    )
+    username = serializers.SlugField(
+        max_length=150,
+        validators=(
+            validators.MaxLengthValidator(150),
+            validators.RegexValidator(r'^[\w.@+-]+\Z')
+        )
+    )
+
     class Meta:
-        fields = ('username', 'email')
         model = User
+        fields = ('username', 'email',)
 
     def validate(self, data):
         if data.get('username') == 'me':
@@ -115,3 +124,11 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
         model = Category
     
+
+class TokenSerializer(serializers.ModelSerializer):
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
+
+    class Meta:
+        fields = ('username', 'confirmation_code',)
+        model = User
