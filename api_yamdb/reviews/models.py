@@ -107,21 +107,21 @@ class Review(models.Model):
         Title,
         on_delete=models.CASCADE,
         related_name='reviews',
-        verbose_name = 'Произведение',
+        verbose_name='Произведение',
     )
     text = models.TextField(
-        verbose_name = 'Текст отзыва',
+        verbose_name='Текст отзыва',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='reviews',
-        verbose_name = 'Автор',
+        verbose_name='Автор',
     )
     score = models.IntegerField(
         validators=(MinValueValidator(1),MaxValueValidator(10)),
         error_messages={'validators': 'Оценка от 1 до 10.'},
-        verbose_name = 'Оценка',
+        verbose_name='Оценка',
     )
     pub_date = models.DateTimeField(auto_now_add=True)
 
@@ -144,16 +144,16 @@ class Comment(models.Model):
         Review,
         on_delete=models.CASCADE,
         related_name='comments',
-        verbose_name = 'Отзыв',
+        verbose_name='Отзыв',
     )
     text = models.TextField(
-        verbose_name = 'Текст комментария',
+        verbose_name='Текст комментария',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='comments',
-        verbose_name = 'Автор',
+        verbose_name='Автор',
     )
     pub_date = models.DateTimeField(auto_now_add=True)
 
