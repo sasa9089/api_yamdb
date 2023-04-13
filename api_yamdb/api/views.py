@@ -10,9 +10,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdmin
-from .serializers import ReviewSerialazer, CommentSerialazer, EditSerializer, UserSerializer, CreateUserSerializer
-from reviews.models import Title, User
+from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdmin, IsAdminOrReadOnly
+from .serializers import ReviewSerialazer, CommentSerialazer, EditSerializer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer
+from reviews.models import Title, User, Title, Genre, Category
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -102,3 +102,22 @@ def create_user(request):
 def create_token(request):
     pass
 
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = (IsAdminOrReadOnly,)
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    pagination_class = PageNumberPagination
+
+
+class GenreViewSet(viewsets.ModelViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    pagination_class = PageNumberPagination
+    
