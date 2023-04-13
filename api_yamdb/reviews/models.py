@@ -2,12 +2,15 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+from api_yamdb.settings import NUM_OF_CHAR
+
+
 class Review(models.Model):
     title = models.IntegerField()
     text = models.TextField()
     author = models.IntegerField()
     score = models.IntegerField(
-        validators=(MinValueValidator(1),MaxValueValidator(10)),
+        validators=(MinValueValidator(1), MaxValueValidator(10)),
         error_messages={'validators': 'Оценка от 1 до 10.'}
     )
     pub_date = models.DateTimeField(auto_now_add=True)
@@ -38,8 +41,6 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.text[:20]
-
-NUM_OF_CHAR = 15
 
 
 class User(AbstractUser):
@@ -87,7 +88,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['id']
+        ordering = ['username']
 
     def __str__(self):
         return self.username[:NUM_OF_CHAR]
