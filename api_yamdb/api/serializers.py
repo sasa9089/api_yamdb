@@ -3,7 +3,9 @@ from rest_framework import serializers
 
 from django.shortcuts import get_object_or_404
 
-from reviews.models import Review, Comment, User
+from reviews.models import Review, Comment, User, Title, Category, Genre
+
+import datetime as dt
 
 
 class ReviewSerialazer(serializers.ModelSerializer):
@@ -89,6 +91,39 @@ class CreateUserSerializer(serializers.ModelSerializer):
             )
         return data
 
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'slug')
+        model = Genre
+    
+    def validate(self, data):
+        if self.context['request'].slug == data['slug']:
+            raise serializers.ValidationError(
+                'Поле slug жанра должно быть уникальным.'
+            )
+        return data
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Genre.objects.all()
+    )
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
+    class Meta:
+        fields = ('category', 'genre', 'name', 'year')
+        model = Title
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'slug')
+        model = Category
+    
 
 class TokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField()

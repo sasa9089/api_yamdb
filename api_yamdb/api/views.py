@@ -12,9 +12,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
-from .serializers import ReviewSerialazer, CommentSerialazer, TokenSerializer, UserSerializer, CreateUserSerializer
-from reviews.models import Title, User
+from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdmin, IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
+from .serializers import ReviewSerialazer, CommentSerialazer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer, TokenSerializer, 
+from reviews.models import Title, User, Genre, Category
+
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -121,3 +122,23 @@ def create_token(request):
     return Response(
         serializer.errors, status=status.HTTP_400_BAD_REQUEST
     )
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = (IsAdminOrReadOnly,)
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    pagination_class = PageNumberPagination
+
+
+class GenreViewSet(viewsets.ModelViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    pagination_class = PageNumberPagination
+
