@@ -1,46 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-
 from api_yamdb.settings import NUM_OF_CHAR
-
-
-class Review(models.Model):
-    title = models.IntegerField()
-    text = models.TextField()
-    author = models.IntegerField()
-    score = models.IntegerField(
-        validators=(MinValueValidator(1), MaxValueValidator(10)),
-        error_messages={'validators': 'Оценка от 1 до 10.'}
-    )
-    pub_date = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = (
-            models.UniqueConstraint(
-                fields=['author', 'title'], name='unique review',
-            ),
-        )
-        ordering = ('-pub_date',)
-
-    def __str__(self):
-        return self.text[:20]
-
-
-class Comment(models.Model):
-    review = models.ForeignKey(
-        Review,
-        on_delete=models.CASCADE
-    )
-    text = models.TextField()
-    author = models.IntegerField()
-    pub_date = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ('-pub_date',)
-
-    def __str__(self):
-        return self.text[:20]
 
 
 class User(AbstractUser):
@@ -139,4 +100,68 @@ class GenreTitle(models.Model):
     
     def __str__(self):
         return f'{self.genre} {self.title}'
+
+
+class Review(models.Model):
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name = 'Произведение',
+    )
+    text = models.TextField(
+        verbose_name = 'Текст отзыва',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name = 'Автор',
+    )
+    score = models.IntegerField(
+        validators=(MinValueValidator(1),MaxValueValidator(10)),
+        error_messages={'validators': 'Оценка от 1 до 10.'},
+        verbose_name = 'Оценка',
+    )
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=['author', 'title'], name='unique review',
+            ),
+        )
+        ordering = ('-pub_date',)
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+
+    def __str__(self):
+        return self.text[:20]
+
+
+class Comment(models.Model):
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name = 'Отзыв',
+    )
+    text = models.TextField(
+        verbose_name = 'Текст комментария',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name = 'Автор',
+    )
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-pub_date',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return self.text[:20]
 
