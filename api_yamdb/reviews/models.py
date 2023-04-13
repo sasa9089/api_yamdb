@@ -1,9 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-
-
-NUM_OF_CHAR = 15
+from api_yamdb.settings import NUM_OF_CHAR
 
 
 class User(AbstractUser):
@@ -51,7 +49,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['id']
+        ordering = ['username']
 
     def __str__(self):
         return self.username[:NUM_OF_CHAR]
