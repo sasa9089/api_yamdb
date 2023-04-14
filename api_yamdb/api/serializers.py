@@ -1,9 +1,10 @@
 from django.core import validators
 from rest_framework import serializers
+from django.db.models.query import QuerySet
 
 from django.shortcuts import get_object_or_404
 
-from reviews.models import Review, Comment, User, Title, Category, Genre
+from reviews.models import Review, Comment, User, Title, Category, Genre, GenreTitle
 
 import datetime as dt
 
@@ -92,6 +93,14 @@ class CreateUserSerializer(serializers.ModelSerializer):
         return data
 
 
+class GenreField(serializers.SlugRelatedField):
+    def to_representation(self, value):
+        if isinstance(value, QuerySet):
+            return [genre.slug for genre in value.all()]
+        else:
+            return value.slug
+
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'slug')
@@ -106,10 +115,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genre = serializers.SlugRelatedField(
-        slug_field='slug',
-        queryset=Genre.objects.all()
-    )
+    genre = GenreField(slug_field='slug', many=True, queryset=Genre.objects.all())
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()

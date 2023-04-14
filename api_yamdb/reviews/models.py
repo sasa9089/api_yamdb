@@ -68,27 +68,42 @@ class User(AbstractUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(max_length=50, unique=True)
+    name = models.CharField(max_length=256, verbose_name='Категория')
+    slug = models.SlugField(max_length=50, unique=True, verbose_name='Url категории')
+
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+        ordering = ['name']
 
     def __str__(self):
         return self.name
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(max_length=50, unique=True)
+    name = models.CharField(max_length=256, verbose_name='Жанр')
+    slug = models.SlugField(max_length=50, unique=True, verbose_name='Url жанра')
+
+    class Meta:
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
+        ordering = ['name']
 
     def __str__(self):
         return self.name
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256)
-    year = models.IntegerField()
-    description = models.TextField(null=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
-    genre = models.ManyToManyField(Genre, through='GenreTitle')
+    name = models.CharField(max_length=256, verbose_name='Название произведения')
+    year = models.IntegerField(verbose_name='Год выпуска')
+    description = models.TextField(null=True, verbose_name='Описание')
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, verbose_name='Категория')
+    genre = models.ManyToManyField(Genre, through='GenreTitle', verbose_name='Жанр')
+
+    class Meta:
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
+        ordering = ['name', 'year']
 
     def __str__(self):
         return self.name
@@ -97,7 +112,7 @@ class Title(models.Model):
 class GenreTitle(models.Model):
     genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True)
     title = models.ForeignKey(Title, on_delete=models.SET_NULL, null=True)
-    
+
     def __str__(self):
         return f'{self.genre} {self.title}'
 
