@@ -8,13 +8,13 @@ from reviews.models import Review, Comment, User, Title, Category, Genre
 import datetime as dt
 
 
-class ReviewSerialazer(serializers.ModelSerializer):
+class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username', read_only=True
     )
 
     class Meta:
-        fields = ('id', 'title', 'text', 'author', 'score', 'pub_date')
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
         model = Review
 
     def validate_score(self, value):
@@ -36,7 +36,7 @@ class ReviewSerialazer(serializers.ModelSerializer):
         return data  
 
 
-class CommentSerialazer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username', read_only=True
     )
@@ -132,3 +132,14 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('username', 'confirmation_code',)
         model = User
+
+
+class ReadOnlyTitleSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Title
+        fields = '__all__'
+

@@ -11,19 +11,21 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
+from django.db.models import Avg
 
-from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdmin, IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
-from .serializers import ReviewSerialazer, CommentSerialazer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer, TokenSerializer, 
+from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
+from .serializers import ReviewSerializer, CommentSerializer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer, TokenSerializer, ReadOnlyTitleSerializer
 from reviews.models import Title, User, Genre, Category
 
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    serializer_class = ReviewSerialazer
+    serializer_class = ReviewSerializer
     permission_classes = (
         IsAuthenticatedOrReadOnly,
         IsAuthorOrModeratorOrAdminOrReadOnly,
     )
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -35,11 +37,12 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    serializer_class = CommentSerialazer
+    serializer_class = CommentSerializer
     permission_classes = (
         IsAuthenticatedOrReadOnly,
         IsAuthorOrModeratorOrAdminOrReadOnly
     )
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -125,10 +128,20 @@ def create_token(request):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = (
+        Title.objects.prefetch_related('reviews')
+        .all()
+        .annotate(rating=Avg('reviews__score'))
+        .order_by('id')
+    )
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
     permission_classes = (IsAdminOrReadOnly,)
+
+    def get_serializer_class(self):
+        if self.action in ('retrieve', 'list'):
+            return ReadOnlyTitleSerializer
+        return TitleSerializer
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
