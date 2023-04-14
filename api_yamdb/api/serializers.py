@@ -1,11 +1,9 @@
 from django.core import validators
-from rest_framework import serializers
-
 from django.shortcuts import get_object_or_404
+from rest_framework import serializers
+from rest_framework.fields import IntegerField
 
-from reviews.models import Review, Comment, User, Title, Category, Genre
-
-import datetime as dt
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class ReviewSerialazer(serializers.ModelSerializer):
@@ -29,11 +27,11 @@ class ReviewSerialazer(serializers.ModelSerializer):
         if (
             request.method == 'POST'
             and Review.objects.filter(
-                title=title, author = user
+                title=title, author=user
             ).exists()
         ):
             raise ValueError('Вы можете оставить только один отзыв.')
-        return data  
+        return data
 
 
 class CommentSerialazer(serializers.ModelSerializer):
@@ -95,36 +93,56 @@ class CreateUserSerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'slug')
+        lookup_field = 'slug'
         model = Genre
-    
-    def validate(self, data):
-        if self.context['request'].slug == data['slug']:
-            raise serializers.ValidationError(
-                'Поле slug жанра должно быть уникальным.'
-            )
-        return data
-
-
-class TitleSerializer(serializers.ModelSerializer):
-    genre = serializers.SlugRelatedField(
-        slug_field='slug',
-        queryset=Genre.objects.all(),
-    )
-    category = serializers.SlugRelatedField(
-        slug_field='slug',
-        queryset=Category.objects.all()
-    )
-
-    class Meta:
-        fields = ('category', 'genre', 'name', 'year')
-        model = Title
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'slug')
         model = Category
-    
+        exclude = ('id', )
+
+
+class TitleReadSerializer(serializers.ModelSerializer):
+    rating = IntegerField(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category',
+        )
+        model = Title
+
+
+class TitleCreateSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
+    genre = serializers.SlugRelatedField(
+        many=True,
+        slug_field='slug',
+        queryset=Genre.objects.all()
+    )
+
+    class Meta:
+        model = Title
+        fields = (
+            'id',
+            'name',
+            'year',
+            'description',
+            'category',
+            'genre',
+        )
+
 
 class TokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField()

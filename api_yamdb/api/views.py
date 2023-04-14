@@ -1,20 +1,29 @@
-from django.db import IntegrityError
-from rest_framework import viewsets, status
-from rest_framework.exceptions import ValidationError
-from rest_framework.filters import SearchFilter
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db import IntegrityError
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
+from rest_framework.exceptions import ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
-from .serializers import ReviewSerialazer, CommentSerialazer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer, TokenSerializer
-from reviews.models import Title, User, Genre, Category
+from reviews.models import Category, Genre, Title, User
+
+from .filters import TitleFilter
+from .mixins import ListMixin
+from .permissions import (IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser,
+                          IsAuthorOrModeratorOrAdminOrReadOnly)
+from .serializers import (CategorySerializer, CommentSerialazer,
+                          CreateUserSerializer, GenreSerializer,
+                          ReviewSerialazer, TitleCreateSerializer,
+                          TitleReadSerializer, TokenSerializer, UserSerializer)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -27,7 +36,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         return title.reviews.all()
-    
+
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         serializer.save(author=self.request.user, title=title)
@@ -46,7 +55,7 @@ class CommentViewSet(viewsets.ModelViewSet):
             title.reviews, pk=self.kwargs.get('review_id')
         )
         return review.comments.all()
-    
+
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         review = get_object_or_404(
@@ -124,20 +133,33 @@ def create_token(request):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
-    serializer_class = TitleSerializer
+    queryset = Title.objects.annotate(rating=Avg("reviews__score"))
     pagination_class = PageNumberPagination
+    filter_backends = (DjangoFilterBackend,)
     permission_classes = (IsAdminOrReadOnly,)
+    filter_class = TitleFilter
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
+        return TitleCreateSerializer
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(ListMixin):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = PageNumberPagination
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(ListMixin):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     pagination_class = PageNumberPagination
-
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
