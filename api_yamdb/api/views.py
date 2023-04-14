@@ -13,9 +13,11 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from django.db.models import Avg
 
+from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
+from .serializers import ReviewSerializer, CommentSerializer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer, TokenSerializer, ReadOnlyTitleSerializer
 from reviews.models import Category, Genre, Title, User
-
 from .filters import TitleFilter
 from .mixins import ListMixin
 from .permissions import (IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser,
@@ -27,11 +29,12 @@ from .serializers import (CategorySerializer, CommentSerialazer,
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    serializer_class = ReviewSerialazer
+    serializer_class = ReviewSerializer
     permission_classes = (
         IsAuthenticatedOrReadOnly,
         IsAuthorOrModeratorOrAdminOrReadOnly,
     )
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -43,11 +46,12 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    serializer_class = CommentSerialazer
+    serializer_class = CommentSerializer
     permission_classes = (
         IsAuthenticatedOrReadOnly,
         IsAuthorOrModeratorOrAdminOrReadOnly
     )
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
