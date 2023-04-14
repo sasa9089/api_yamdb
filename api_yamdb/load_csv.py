@@ -1,5 +1,5 @@
-import sqlite3
 import csv
+import sqlite3
 
 # открываем соединение с базой данных
 conn = sqlite3.connect('db.sqlite3')
