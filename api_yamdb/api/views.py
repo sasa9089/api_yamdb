@@ -16,15 +16,15 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django.db.models import Avg
 
 from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
-from .serializers import ReviewSerializer, CommentSerializer, UserSerializer, CreateUserSerializer, TitleSerializer, CategorySerializer, GenreSerializer, TokenSerializer, ReadOnlyTitleSerializer
+from .serializers import ReviewSerializer, CommentSerializer, UserSerializer, CreateUserSerializer, CategorySerializer, GenreSerializer, TokenSerializer
 from reviews.models import Category, Genre, Title, User
 from .filters import TitleFilter
 from .mixins import ListMixin
 from .permissions import (IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser,
                           IsAuthorOrModeratorOrAdminOrReadOnly)
-from .serializers import (CategorySerializer, CommentSerialazer,
+from .serializers import (CategorySerializer, CommentSerializer,
                           CreateUserSerializer, GenreSerializer,
-                          ReviewSerialazer, TitleCreateSerializer,
+                          ReviewSerializer, TitleCreateSerializer,
                           TitleReadSerializer, TokenSerializer, UserSerializer)
 
 
