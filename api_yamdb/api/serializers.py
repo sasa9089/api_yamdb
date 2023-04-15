@@ -1,5 +1,4 @@
 from django.core import validators
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.fields import IntegerField
 

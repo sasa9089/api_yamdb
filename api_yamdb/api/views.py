@@ -3,7 +3,6 @@ from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.exceptions import ValidationError
@@ -13,11 +12,9 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from django.db.models import Avg
 
-from .permissions import IsAuthorOrModeratorOrAdminOrReadOnly, IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser
-from .serializers import ReviewSerializer, CommentSerializer, UserSerializer, CreateUserSerializer, CategorySerializer, GenreSerializer, TokenSerializer
 from reviews.models import Category, Genre, Title, User
+
 from .filters import TitleFilter
 from .mixins import ListMixin
 from .permissions import (IsAdminOrReadOnly, IsAuthorizedOrAdminOrSuperuser,
@@ -137,11 +134,11 @@ def create_token(request):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg("reviews__score"))
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')).order_by('name')
     pagination_class = PageNumberPagination
-    filter_backends = (DjangoFilterBackend,)
     permission_classes = (IsAdminOrReadOnly,)
-    filter_class = TitleFilter
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
