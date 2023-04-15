@@ -1,5 +1,6 @@
+import os
+from datetime import timedelta
 from pathlib import Path
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,6 +22,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'django_filters',
+    'api',
+    'reviews',
 ]
 
 MIDDLEWARE = [
@@ -39,7 +45,7 @@ TEMPLATES_DIR = BASE_DIR / 'templates'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [TEMPLATES_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -60,7 +66,7 @@ WSGI_APPLICATION = 'api_yamdb.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -100,4 +106,36 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR / 'static/'),
+    os.path.join(BASE_DIR, 'data'),
+)
+
+AUTH_USER_MODEL = 'reviews.User'
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_PAGINATION_CLASS': (
+        'rest_framework.pagination.PageNumberPagination',
+    ),
+    'PAGE_SIZE': 5,
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+
+NUM_OF_CHAR = 15
+REDUCTION = 20
