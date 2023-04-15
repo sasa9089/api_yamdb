@@ -65,7 +65,7 @@ python manage.py runserver
 ```
 
 ```
-sqlite3 db.sqlite3
+sqlite3 api_yamdb\db.sqlite3
 ```
 
 Выбираем формат csv:
