@@ -11,4 +11,4 @@ class TitleFilter(FilterSet):
 
     class Meta:
         model = Title
-        fields = ['year', 'category', 'genre', 'name']
+        fields = ('year', 'category', 'genre', 'name')

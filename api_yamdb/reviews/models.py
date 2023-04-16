@@ -1,8 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
-from api_yamdb.settings import NUM_OF_CHAR, REDUCTION
+from api_yamdb.settings import NUM_OF_CHAR, REDUCTION, MIN_NUM, MAX_NUM
 
 
 class User(AbstractUser):
@@ -10,9 +11,9 @@ class User(AbstractUser):
     ADMIN = 'admin'
     MODERATOR = 'moderator'
     CHOICES = [
-        (USER, 'user'),
-        (ADMIN, 'admin'),
-        (MODERATOR, 'moderator')
+        (USER, 'Пользователь'),
+        (ADMIN, 'Администратор'),
+        (MODERATOR, 'Модератор')
     ]
     username = models.SlugField(
         verbose_name='Имя пользователя',
@@ -38,19 +39,17 @@ class User(AbstractUser):
         verbose_name='Биография',
         blank=True,
     )
-    role = models.SlugField(
+    role = models.CharField(
         verbose_name='Роль',
+        max_length=max(len(role) for role, _ in CHOICES),
         choices=CHOICES,
         default=USER,
-    )
-    confirmation_code = models.CharField(
-        max_length=255,
     )
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['username']
+        ordering = ('username',)
 
     def __str__(self):
         return self.username[:NUM_OF_CHAR]
@@ -61,7 +60,7 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == self.ADMIN
+        return self.role == self.ADMIN or self.is_superuser
 
     @property
     def is_moderator(self):
@@ -73,7 +72,7 @@ class Category(models.Model):
     slug = models.SlugField(max_length=50, unique=True)
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
@@ -89,11 +88,11 @@ class Genre(models.Model):
     slug = models.SlugField(
         max_length=50,
         unique=True,
-        verbose_name='Слаг'
+        verbose_name='Слаг',
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
@@ -106,11 +105,11 @@ class Title(models.Model):
         max_length=256,
         verbose_name='Название'
     )
-    year = models.IntegerField(
-        verbose_name='Год выхода'
+    year = models.PositiveSmallIntegerField(
+        verbose_name='Год выхода',
+        validators=[MaxValueValidator(timezone.now().year)]
     )
     description = models.TextField(
-        null=True,
         verbose_name='Описание'
     )
     category = models.ForeignKey(
@@ -126,7 +125,7 @@ class Title(models.Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
 
@@ -137,14 +136,12 @@ class Title(models.Model):
 class GenreTitle(models.Model):
     genre = models.ForeignKey(
         Genre,
-        on_delete=models.SET_NULL,
-        null=True,
+        on_delete=models.CASCADE,
         verbose_name='Жанр'
     )
     title = models.ForeignKey(
         Title,
-        on_delete=models.SET_NULL,
-        null=True,
+        on_delete=models.CASCADE,
         verbose_name='Название'
     )
 
@@ -178,8 +175,8 @@ class Review(models.Model):
         related_name='reviews',
         verbose_name='Автор',
     )
-    score = models.IntegerField(
-        validators=(MinValueValidator(1), MaxValueValidator(10)),
+    score = models.PositiveSmallIntegerField(
+        validators=(MinValueValidator(MIN_NUM), MaxValueValidator(MAX_NUM)),
         error_messages={'validators': 'Оценка от 1 до 10.'},
         verbose_name='Оценка',
     )
