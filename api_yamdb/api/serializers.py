@@ -135,6 +135,9 @@ class TitleCreateSerializer(serializers.ModelSerializer):
             'genre',
         )
 
+    def to_representation(self, title):
+        return TitleReadSerializer(title).data
+
 
 class TokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
