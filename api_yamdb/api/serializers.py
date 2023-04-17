@@ -1,7 +1,6 @@
 from django.core import validators
 from rest_framework import serializers
 from rest_framework.fields import IntegerField
-
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
@@ -137,6 +136,15 @@ class TitleCreateSerializer(serializers.ModelSerializer):
 
     def to_representation(self, title):
         return TitleReadSerializer(title).data
+
+    def create(self, validateddata):
+        genre = validateddata.pop('genre', [])
+        if not genre:
+            raise serializers.ValidationError(
+                {'genre': ['Список жанров не может быть пустым']})
+        title = Title.objects.create(**validateddata)
+        title.genre.set(genre)
+        return title
 
 
 class TokenSerializer(serializers.ModelSerializer):

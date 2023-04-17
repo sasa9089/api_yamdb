@@ -1,9 +1,8 @@
+from api_yamdb.settings import MAX_NUM, MIN_NUM, NUM_OF_CHAR, REDUCTION
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
-
-from api_yamdb.settings import NUM_OF_CHAR, REDUCTION, MIN_NUM, MAX_NUM
 
 
 class User(AbstractUser):
@@ -110,6 +109,7 @@ class Title(models.Model):
         validators=[MaxValueValidator(timezone.now().year)]
     )
     description = models.TextField(
+        blank=True,
         verbose_name='Описание'
     )
     category = models.ForeignKey(
@@ -134,15 +134,15 @@ class Title(models.Model):
 
 
 class GenreTitle(models.Model):
-    genre = models.ForeignKey(
-        Genre,
-        on_delete=models.CASCADE,
-        verbose_name='Жанр'
-    )
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
         verbose_name='Название'
+    )
+    genre = models.ForeignKey(
+        Genre,
+        on_delete=models.CASCADE,
+        verbose_name='Жанр'
     )
 
     class Meta:
