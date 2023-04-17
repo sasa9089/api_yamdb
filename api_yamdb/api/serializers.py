@@ -1,7 +1,6 @@
 from django.core import validators
 from rest_framework import serializers
 from rest_framework.fields import IntegerField
-
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
@@ -62,13 +61,11 @@ class UserSerializer(serializers.ModelSerializer):
 class CreateUserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         max_length=254,
-        validators=(validators.MaxLengthValidator(254),)
     )
-    username = serializers.SlugField(
+    username = serializers.CharField(
         max_length=150,
         validators=(
-            validators.MaxLengthValidator(150),
-            validators.RegexValidator(r'^[\w.@+-]+\Z')
+            validators.RegexValidator(r'^[\w.@+-]+\Z'),
         )
     )
 
@@ -79,7 +76,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data.get('username') == 'me':
             raise serializers.ValidationError(
-                'Нельзя использовать это имя.'
+                {'username': ['Нельзя использовать это имя.']}
             )
         return data
 
@@ -137,11 +134,35 @@ class TitleCreateSerializer(serializers.ModelSerializer):
             'genre',
         )
 
+    def to_representation(self, title):
+        return TitleReadSerializer(title).data
+
+    def create(self, validateddata):
+        genre = validateddata.pop('genre', [])
+        if not genre:
+            raise serializers.ValidationError(
+                {'genre': ['Список жанров не может быть пустым']})
+        title = Title.objects.create(**validateddata)
+        title.genre.set(genre)
+        return title
+
 
 class TokenSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()
+    username = serializers.CharField(
+        max_length=150,
+        validators=(
+            validators.RegexValidator(r'^[\w.@+-]+\Z'),
+        )
+    )
     confirmation_code = serializers.CharField()
 
     class Meta:
         fields = ('username', 'confirmation_code',)
         model = User
+
+    def validate(self, data):
+        if data.get('username') == 'me':
+            raise serializers.ValidationError(
+                'Нельзя использовать это имя.'
+            )
+        return data

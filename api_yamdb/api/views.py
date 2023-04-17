@@ -5,14 +5,12 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
-from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-
 from reviews.models import Category, Genre, Title, User
 
 from .filters import TitleFilter
@@ -50,17 +48,18 @@ class CommentViewSet(viewsets.ModelViewSet):
     )
     pagination_class = PageNumberPagination
 
+    def title_get(self):
+        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         review = get_object_or_404(
-            title.reviews, pk=self.kwargs.get('review_id')
+            self.title_get().reviews, pk=self.kwargs.get('review_id')
         )
         return review.comments.all()
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         review = get_object_or_404(
-            title.reviews, pk=self.kwargs.get('review_id')
+            self.title_get().reviews, pk=self.kwargs.get('review_id')
         )
         serializer.save(author=self.request.user, review=review)
 
@@ -102,8 +101,9 @@ def create_user(request):
         user, created = User.objects.get_or_create(
             username=username, email=email
         )
-    except IntegrityError as error:
-        raise ValidationError(f'{error}')
+    except IntegrityError:
+        return Response('Такой логин или email уже существуют',
+                        status=status.HTTP_400_BAD_REQUEST)
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='Регистрация на сайте YaMDb',
