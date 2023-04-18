@@ -11,6 +11,7 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+
 from reviews.models import Category, Genre, Title, User
 
 from .filters import TitleFilter
@@ -95,14 +96,19 @@ class UserViewSet(viewsets.ModelViewSet):
 def create_user(request):
     serializer = CreateUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data['username']
-    email = serializer.validated_data['email']
     try:
+        username = serializer.validated_data['username']
+        email = serializer.validated_data['email']
         user, created = User.objects.get_or_create(
             username=username, email=email
         )
     except IntegrityError:
-        return Response('Такой логин или email уже существуют',
+        real_error = (
+            {'username': ['Это имя уже занято.']}
+            if User.objects.filter(username=username).exists()
+            else {'email': ['Эта электронная почта уже занята.']}
+        )
+        return Response(real_error,
                         status=status.HTTP_400_BAD_REQUEST)
     confirmation_code = default_token_generator.make_token(user)
     send_mail(

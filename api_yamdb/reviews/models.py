@@ -1,8 +1,9 @@
-from api_yamdb.settings import MAX_NUM, MIN_NUM, NUM_OF_CHAR, REDUCTION
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
+
+from api_yamdb.settings import MAX_NUM, MIN_NUM, NUM_OF_CHAR, REDUCTION
 
 
 class User(AbstractUser):

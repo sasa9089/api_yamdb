@@ -1,6 +1,11 @@
+from datetime import datetime
+
 from django.core import validators
+from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
 from rest_framework.fields import IntegerField
+
+from api_yamdb.settings import MIN_YEAR
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
@@ -122,6 +127,10 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         slug_field='slug',
         queryset=Genre.objects.all()
     )
+    year = IntegerField(
+        validators=[MinValueValidator(MIN_YEAR),
+                    MaxValueValidator(datetime.now().year)]
+    )
 
     class Meta:
         model = Title
@@ -163,6 +172,6 @@ class TokenSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data.get('username') == 'me':
             raise serializers.ValidationError(
-                'Нельзя использовать это имя.'
+                {'username': ['Нельзя использовать это имя.']}
             )
         return data
